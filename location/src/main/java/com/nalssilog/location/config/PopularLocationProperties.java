@@ -10,7 +10,7 @@ public record PopularLocationProperties(
         Duration snapshotInterval
 ) {
 
-    private static final Duration DEFAULT_WINDOW = Duration.ofDays(7);
+    private static final Duration DEFAULT_WINDOW = Duration.ofDays(30);
     private static final int DEFAULT_LIMIT = 20;
     private static final Duration DEFAULT_SNAPSHOT_INTERVAL = Duration.ofMinutes(10);
     private static final int MAX_LIMIT = 20;
