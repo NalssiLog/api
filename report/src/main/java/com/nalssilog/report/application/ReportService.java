@@ -3,11 +3,13 @@ package com.nalssilog.report.application;
 import com.nalssilog.common.exception.NalssiLogException;
 import com.nalssilog.common.response.CursorPage;
 import com.nalssilog.member.application.dto.TermsAgreement;
+import com.nalssilog.report.api.dto.LiveReportsResponse;
 import com.nalssilog.report.api.dto.ReportResponse;
 import com.nalssilog.report.api.dto.ThanksResponse;
 import com.nalssilog.report.api.dto.WeatherStatsResponse;
 import com.nalssilog.report.application.dto.AuthorInfo;
 import com.nalssilog.report.application.dto.CreateReportCommand;
+import com.nalssilog.report.application.dto.LiveReportData;
 import com.nalssilog.report.application.dto.LocationSummary;
 import com.nalssilog.report.application.dto.ReportActor;
 import com.nalssilog.report.application.dto.ReportData;
@@ -40,6 +42,8 @@ public class ReportService {
 
     private static final int PAGE_SIZE = 20;
     private static final Duration STATS_WINDOW = Duration.ofHours(3);
+    private static final int LIVE_REPORT_LIMIT = 20;
+    private static final Duration LIVE_REPORT_WINDOW = Duration.ofHours(24);
 
     private final WeatherReportRepository reportRepository;
     private final ThanksRepository thanksRepository;
@@ -112,6 +116,30 @@ public class ReportService {
         String nextCursor = hasNext ? CursorCodec.encode(lastItem.createdAt(), lastItem.id()) : null;
 
         return CursorPage.of(items, nextCursor);
+    }
+
+    public LiveReportsResponse live(ReportActor viewer) {
+        return liveAt(viewer, Instant.now());
+    }
+
+    LiveReportsResponse liveAt(ReportActor viewer, Instant now) {
+        List<LiveReportData> reports = reportRepository.findLiveReports(
+                now.minus(LIVE_REPORT_WINDOW), viewer, LIVE_REPORT_LIMIT);
+
+        if (reports.isEmpty()) {
+            return new LiveReportsResponse(List.of());
+        }
+
+        Map<Long, LocationSummary> locations = locationClient.getLocations(
+                reports.stream().map(LiveReportData::locationId).distinct().toList());
+        List<LiveReportsResponse.Item> items = reports.stream()
+                .map(report -> LiveReportsResponse.Item.of(
+                        report,
+                        locations.get(report.locationId()),
+                        LiveReportMessageResolver.resolve(report)))
+                .toList();
+
+        return new LiveReportsResponse(items);
     }
 
     /**

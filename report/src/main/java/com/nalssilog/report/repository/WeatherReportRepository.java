@@ -5,6 +5,7 @@ import static com.nalssilog.report.domain.QWeatherReportImage.weatherReportImage
 import static com.nalssilog.report.domain.QActorBlock.actorBlock;
 
 import com.nalssilog.common.exception.NalssiLogException;
+import com.nalssilog.report.application.dto.LiveReportData;
 import com.nalssilog.report.application.dto.PopularLocationAggregate;
 import com.nalssilog.report.application.dto.ReportData;
 import com.nalssilog.report.application.dto.ReportActor;
@@ -142,6 +143,38 @@ public class WeatherReportRepository {
 
         return fetchImages(reports).stream()
                 .map(ReportData::of)
+                .toList();
+    }
+
+    public List<LiveReportData> findLiveReports(
+            Instant since,
+            ReportActor viewer,
+            int limit
+    ) {
+        return queryFactory
+                .select(
+                        weatherReport.id,
+                        weatherReport.locationId,
+                        weatherReport.temperature,
+                        weatherReport.precipitation,
+                        weatherReport.sunlight,
+                        weatherReport.createdAt)
+                .from(weatherReport)
+                .where(
+                        weatherReport.moderationStatus.eq(ModerationStatus.VISIBLE),
+                        weatherReport.createdAt.goe(since),
+                        withoutBlockRelation(viewer))
+                .orderBy(weatherReport.createdAt.desc(), weatherReport.id.desc())
+                .limit(limit)
+                .fetch()
+                .stream()
+                .map(row -> new LiveReportData(
+                        row.get(weatherReport.id),
+                        row.get(weatherReport.locationId),
+                        row.get(weatherReport.temperature),
+                        row.get(weatherReport.precipitation),
+                        row.get(weatherReport.sunlight),
+                        row.get(weatherReport.createdAt)))
                 .toList();
     }
 
