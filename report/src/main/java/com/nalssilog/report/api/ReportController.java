@@ -3,6 +3,7 @@ package com.nalssilog.report.api;
 import com.nalssilog.common.response.CursorPage;
 import com.nalssilog.report.api.dto.CreateReportRequest;
 import com.nalssilog.report.api.dto.CreateReportFlagRequest;
+import com.nalssilog.report.api.dto.LiveReportsResponse;
 import com.nalssilog.report.api.dto.ReportFlagResponse;
 import com.nalssilog.report.application.ActorRestrictionService;
 import com.nalssilog.report.application.ReportFlagService;
@@ -18,7 +19,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -84,6 +87,19 @@ public class ReportController {
         ReportActor viewer = actorResolver.resolveForRead(memberId, httpRequest);
 
         return reportService.list(locationId, cursor, viewer, actorResolver.resolveForOwnership(memberId, httpRequest));
+    }
+
+    @GetMapping("/live")
+    public ResponseEntity<LiveReportsResponse> live(
+            @AuthenticationPrincipal Long memberId,
+            HttpServletRequest httpRequest
+    ) {
+        ReportActor viewer = actorResolver.resolveForRead(memberId, httpRequest);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .body(reportService.live(viewer));
     }
 
     @GetMapping("/me")
