@@ -1,5 +1,5 @@
-# prod 환경 compose. 지금은 dev 와 같은 EC2 에서 별도 프로젝트로 실행, 추후 인스턴스 분리 시 이 파일만 옮기면 됨.
-# 이미지=ghcr(배포 시 버전·커밋 태그, 수동 실행 시 :prod), Postgres=Neon(prod), Redis=Upstash(외부, .env.prod 의 PROD_REDIS_*), 이미지=R2.
+# prod 환경 compose.
+# 이미지=ghcr(배포 시 버전·커밋 태그, 수동 실행 시 :prod), Postgres=Supabase(prod), Redis=Upstash(외부, .env.prod 의 PROD_REDIS_*), 이미지=R2.
 # 설정: ./config 의 yml 마운트 + ./.env.prod 시크릿. HTTPS/라우팅은 호스트 nginx(EC2 에서 직접).
 name: nalssilog-prod
 
